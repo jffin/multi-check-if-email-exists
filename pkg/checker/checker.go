@@ -17,7 +17,7 @@ const (
 	appToRun   string = "app/check_if_email_exists"
 	appOptions string = "--http"
 
-	defaultStartUpWaiting = 100 * time.Millisecond
+	defaultStartUpWaiting = 200 * time.Millisecond
 )
 
 type request struct {
