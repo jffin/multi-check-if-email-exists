@@ -10,11 +10,11 @@ import (
 )
 
 const (
-	REQUEST_URL          string = "http://127.0.0.1:3000"
-	REQUEST_CONTENT_TYPE string = "application/json"
+	RequestUrl         string = "http://127.0.0.1:3000"
+	RequestContentType string = "application/json"
 
-	APP_TO_RUN  string = "app/check_if_email_exists"
-	APP_OPTIONS string = "--http"
+	AppToRun   string = "app/check_if_email_exists"
+	AppOptions string = "--http"
 )
 
 type Request struct {
@@ -48,32 +48,33 @@ func Check(targetsArray []string) Response {
 	postBody, _ := json.Marshal(Request{ToEmails: targetsArray})
 	requestBody := bytes.NewBuffer(postBody)
 
-	response, err := http.Post(REQUEST_URL, REQUEST_CONTENT_TYPE, requestBody)
+	response, err := http.Post(RequestUrl, RequestContentType, requestBody)
 
 	if err != nil {
 		log.Fatalf("An Error Occurred %v", err)
 	}
-	defer response.Body.Close()
+	defer func(Body io.ReadCloser) {
+		err := Body.Close()
+		if err != nil {
+			log.Fatalf("Failed to close %v", err)
+		}
+	}(response.Body)
 	killRustCheck(command)
 
 	return readResponse(response)
 }
 
-func startRustCheck() *exec.Command {
-	cmd := exec.Command(APP_TO_RUN, APP_OPTIONS)
+func startRustCheck() *exec.Cmd {
+	cmd := exec.Command(AppToRun, AppOptions)
 	if err := cmd.Start(); err != nil {
 		log.Fatalf("check_if_email_exists fail to start with error: %v", err)
 	}
-	go func() {
-		err := cmd.Wait()
-		log.Printf("Command finished with error: %v", err)
-	}()
-	return &cmd
+	return cmd
 }
 
-func killRustCheck(command *exec.Command) {
-	if err := *command.Process.Kill(); err != nil {
-		log.Fatalf("failed to kill process: ", err)
+func killRustCheck(command *exec.Cmd) {
+	if err := command.Process.Kill(); err != nil {
+		log.Fatalf("failed to kill process: %v", err)
 	}
 }
 
@@ -84,7 +85,9 @@ func readResponse(response *http.Response) Response {
 	}
 
 	var responseData Response
-	json.Unmarshal([]byte(b.String()), &responseData)
+	if err := json.Unmarshal([]byte(b.String()), &responseData); err != nil {
+		log.Fatalf("Unsacsesful deserialization %v", err)
+	}
 
 	return responseData
 }
