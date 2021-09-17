@@ -173,6 +173,7 @@ modules.xml
 ### Custom ###
 bin/*
 files/*
+app/*
 cover.txt
 cover.html
 

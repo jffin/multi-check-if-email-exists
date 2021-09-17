@@ -6,11 +6,15 @@ import (
 	"io"
 	"log"
 	"net/http"
+	"os/exec"
 )
 
 const (
 	REQUEST_URL          string = "http://127.0.0.1:3000"
 	REQUEST_CONTENT_TYPE string = "application/json"
+
+	APP_TO_RUN  string = "app/check_if_email_exists"
+	APP_OPTIONS string = "--http"
 )
 
 type Request struct {
@@ -39,6 +43,8 @@ type Response []struct {
 }
 
 func Check(targetsArray []string) Response {
+	command := startRustCheck()
+
 	postBody, _ := json.Marshal(Request{ToEmails: targetsArray})
 	requestBody := bytes.NewBuffer(postBody)
 
@@ -48,8 +54,27 @@ func Check(targetsArray []string) Response {
 		log.Fatalf("An Error Occurred %v", err)
 	}
 	defer response.Body.Close()
+	killRustCheck(command)
 
 	return readResponse(response)
+}
+
+func startRustCheck() *exec.Command {
+	cmd := exec.Command(APP_TO_RUN, APP_OPTIONS)
+	if err := cmd.Start(); err != nil {
+		log.Fatalf("check_if_email_exists fail to start with error: %v", err)
+	}
+	go func() {
+		err := cmd.Wait()
+		log.Printf("Command finished with error: %v", err)
+	}()
+	return &cmd
+}
+
+func killRustCheck(command *exec.Command) {
+	if err := *command.Process.Kill(); err != nil {
+		log.Fatalf("failed to kill process: ", err)
+	}
 }
 
 func readResponse(response *http.Response) Response {
