@@ -7,6 +7,7 @@ import (
 	"log"
 	"net/http"
 	"os/exec"
+	"time"
 )
 
 const (
@@ -15,6 +16,8 @@ const (
 
 	appToRun   string = "app/check_if_email_exists"
 	appOptions string = "--http"
+
+	defaultStartUpWaiting = 100 * time.Millisecond
 )
 
 type request struct {
@@ -34,17 +37,36 @@ type syntaxResponse struct {
 }
 
 type Response []struct {
-	Input       string            `json:"input"`
-	IsReachable string            `json:"is_reachable"`
-	Misc        map[string]string `json:"misc"`
-	Mx          mxResponse        `json:"mx"`
-	Smtp        map[string]bool   `json:"smtp"`
-	Syntax      syntaxResponse    `json:"syntax"`
+	Input       string          `json:"input"`
+	IsReachable string          `json:"is_reachable"`
+	Misc        map[string]bool `json:"misc"`
+	Mx          mxResponse      `json:"mx"`
+	Smtp        map[string]bool `json:"smtp"`
+	Syntax      syntaxResponse  `json:"syntax"`
 }
 
 func Check(targetsArray []string) Response {
 	command := startRustCheck()
+	defer killRustCheck(command)
+	return sendRequest(targetsArray)
+}
 
+func startRustCheck() *exec.Cmd {
+	cmd := exec.Command(appToRun, appOptions)
+	if err := cmd.Start(); err != nil {
+		log.Fatalf("check_if_email_exists fail to start with error: %v", err)
+	}
+	time.Sleep(defaultStartUpWaiting)
+	return cmd
+}
+
+func killRustCheck(command *exec.Cmd) {
+	if err := command.Process.Kill(); err != nil {
+		log.Fatalf("failed to kill process: %v", err)
+	}
+}
+
+func sendRequest(targetsArray []string) Response {
 	postBody, _ := json.Marshal(request{ToEmails: targetsArray})
 	requestBody := bytes.NewBuffer(postBody)
 
@@ -59,23 +81,8 @@ func Check(targetsArray []string) Response {
 			log.Fatalf("Failed to close %v", err)
 		}
 	}(response.Body)
-	killRustCheck(command)
 
 	return readResponse(response)
-}
-
-func startRustCheck() *exec.Cmd {
-	cmd := exec.Command(appToRun, appOptions)
-	if err := cmd.Start(); err != nil {
-		log.Fatalf("check_if_email_exists fail to start with error: %v", err)
-	}
-	return cmd
-}
-
-func killRustCheck(command *exec.Cmd) {
-	if err := command.Process.Kill(); err != nil {
-		log.Fatalf("failed to kill process: %v", err)
-	}
 }
 
 func readResponse(response *http.Response) Response {
@@ -83,6 +90,7 @@ func readResponse(response *http.Response) Response {
 	if _, err := io.Copy(&b, response.Body); err != nil {
 		log.Fatalln("reading response body", err)
 	}
+	log.Printf("response: %s", b.String())
 
 	var responseData Response
 	if err := json.Unmarshal([]byte(b.String()), &responseData); err != nil {
