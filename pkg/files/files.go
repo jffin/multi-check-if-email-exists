@@ -17,7 +17,7 @@ func ReadInputFile(fileName string) []string {
 	return cleanupInputContent(content)
 }
 
-func WriteOutputFile(fileName string, results []checker.Response) {
+func WriteOutputFile(fileName string, results checker.Response) {
 	data, _ := json.Marshal(results)
 	if err := os.WriteFile(fileName, data, 0644); err != nil {
 		log.Fatalf("writing to output file %v", err)

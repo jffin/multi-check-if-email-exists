@@ -1,8 +1,6 @@
 package main
 
 import (
-	"fmt"
-
 	"github.com/jffin/multi-check-if-email-exists/pkg/args"
 	"github.com/jffin/multi-check-if-email-exists/pkg/checker"
 	"github.com/jffin/multi-check-if-email-exists/pkg/files"
@@ -23,7 +21,5 @@ func main() {
 	}
 
 	results := checker.Check(targets)
-	fmt.Println(fmt.Println(results))
-
 	files.WriteOutputFile(*outputFile, results)
 }

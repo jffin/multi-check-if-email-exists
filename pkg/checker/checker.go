@@ -3,7 +3,6 @@ package checker
 import (
 	"bytes"
 	"encoding/json"
-	"fmt"
 	"io"
 	"log"
 	"net/http"
@@ -39,7 +38,7 @@ type Response []struct {
 	Syntax      SyntaxResponse    `json:"syntax"`
 }
 
-func Check(targetsArray []string) []Response {
+func Check(targetsArray []string) Response {
 	postBody, _ := json.Marshal(Request{ToEmails: targetsArray})
 	requestBody := bytes.NewBuffer(postBody)
 
@@ -50,18 +49,16 @@ func Check(targetsArray []string) []Response {
 	}
 	defer response.Body.Close()
 
-	fmt.Println(requestBody)
-
 	return readResponse(response)
 }
 
-func readResponse(response *http.Response) []Response {
+func readResponse(response *http.Response) Response {
 	var b bytes.Buffer
 	if _, err := io.Copy(&b, response.Body); err != nil {
 		log.Fatalln("reading response body", err)
 	}
 
-	var responseData []Response
+	var responseData Response
 	json.Unmarshal([]byte(b.String()), &responseData)
 
 	return responseData
