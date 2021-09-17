@@ -7,7 +7,7 @@ import (
 )
 
 const (
-	TargetCheckIndex int = 0
+	targetCheckIndex int = 0
 )
 
 func main() {
@@ -16,7 +16,7 @@ func main() {
 	var targets []string
 	targets = append(targets, *target)
 
-	if targets[TargetCheckIndex] == args.TARGET {
+	if targets[targetCheckIndex] == args.TARGET {
 		targets = files.ReadInputFile(*inputFile)
 	}
 

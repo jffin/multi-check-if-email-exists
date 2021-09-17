@@ -10,23 +10,23 @@ import (
 )
 
 const (
-	RequestUrl         string = "http://127.0.0.1:3000"
-	RequestContentType string = "application/json"
+	requestUrl         string = "http://127.0.0.1:3000"
+	requestContentType string = "application/json"
 
-	AppToRun   string = "app/check_if_email_exists"
-	AppOptions string = "--http"
+	appToRun   string = "app/check_if_email_exists"
+	appOptions string = "--http"
 )
 
-type Request struct {
+type request struct {
 	ToEmails []string `json:"to_emails"`
 }
 
-type MXResponse struct {
+type mxResponse struct {
 	AcceptsMail bool     `json:"accepts_mail"`
 	Records     []string `json:"records"`
 }
 
-type SyntaxResponse struct {
+type syntaxResponse struct {
 	Address       string `json:"address"`
 	Domain        string `json:"domain"`
 	IsValidSyntax bool   `json:"is_valid_syntax"`
@@ -37,18 +37,18 @@ type Response []struct {
 	Input       string            `json:"input"`
 	IsReachable string            `json:"is_reachable"`
 	Misc        map[string]string `json:"misc"`
-	Mx          MXResponse        `json:"mx"`
+	Mx          mxResponse        `json:"mx"`
 	Smtp        map[string]bool   `json:"smtp"`
-	Syntax      SyntaxResponse    `json:"syntax"`
+	Syntax      syntaxResponse    `json:"syntax"`
 }
 
 func Check(targetsArray []string) Response {
 	command := startRustCheck()
 
-	postBody, _ := json.Marshal(Request{ToEmails: targetsArray})
+	postBody, _ := json.Marshal(request{ToEmails: targetsArray})
 	requestBody := bytes.NewBuffer(postBody)
 
-	response, err := http.Post(RequestUrl, RequestContentType, requestBody)
+	response, err := http.Post(requestUrl, requestContentType, requestBody)
 
 	if err != nil {
 		log.Fatalf("An Error Occurred %v", err)
@@ -65,7 +65,7 @@ func Check(targetsArray []string) Response {
 }
 
 func startRustCheck() *exec.Cmd {
-	cmd := exec.Command(AppToRun, AppOptions)
+	cmd := exec.Command(appToRun, appOptions)
 	if err := cmd.Start(); err != nil {
 		log.Fatalf("check_if_email_exists fail to start with error: %v", err)
 	}
@@ -86,7 +86,7 @@ func readResponse(response *http.Response) Response {
 
 	var responseData Response
 	if err := json.Unmarshal([]byte(b.String()), &responseData); err != nil {
-		log.Fatalf("Unsacsesful deserialization %v", err)
+		log.Fatalf("Unsuccessful deserialization %v", err)
 	}
 
 	return responseData
