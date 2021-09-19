@@ -29,6 +29,14 @@ type mxResponse struct {
 	Records     []string `json:"records"`
 }
 
+type smtpResponse struct {
+	CanConnectSmtp bool              `json:"can_connect_smtp,omitempty"`
+	HasFullInbox   bool              `json:"has_full_inbox,omitempty"`
+	IsCatchAll     bool              `json:"is_catch_all,omitempty"`
+	IsDeliverable  bool              `json:"is_deliverable,omitempty"`
+	Error          map[string]string `json:"error,omitempty"`
+}
+
 type syntaxResponse struct {
 	Address       string `json:"address"`
 	Domain        string `json:"domain"`
@@ -41,7 +49,7 @@ type Response []struct {
 	IsReachable string          `json:"is_reachable"`
 	Misc        map[string]bool `json:"misc"`
 	Mx          mxResponse      `json:"mx"`
-	Smtp        map[string]bool `json:"smtp"`
+	Smtp        smtpResponse    `json:"smtp"`
 	Syntax      syntaxResponse  `json:"syntax"`
 }
 
