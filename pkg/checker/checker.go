@@ -98,10 +98,9 @@ func readResponse(response *http.Response) Response {
 	if _, err := io.Copy(&b, response.Body); err != nil {
 		log.Fatalln("reading response body", err)
 	}
-	log.Printf("response: %s", b.String())
 
 	var responseData Response
-	if err := json.Unmarshal([]byte(b.String()), &responseData); err != nil {
+	if err := json.Unmarshal(b.Bytes(), &responseData); err != nil {
 		log.Fatalf("Unsuccessful deserialization %v", err)
 	}
 

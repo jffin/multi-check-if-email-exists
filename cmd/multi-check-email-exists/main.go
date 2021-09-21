@@ -12,14 +12,16 @@ const (
 
 func main() {
 	target, inputFile, outputFile := args.InitArgs()
-
-	var targets []string
-	targets = append(targets, *target)
-
-	if targets[targetCheckIndex] == args.TARGET {
-		targets = files.ReadInputFile(*inputFile)
-	}
-
+	targets := setupTargets(*target, *inputFile)
 	results := checker.Check(targets)
 	files.WriteOutputFile(*outputFile, results)
+}
+
+func setupTargets(target string, inputFile string) (targets []string) {
+	targets = append(targets, target)
+	if targets[targetCheckIndex] == args.DefaultTarget {
+		targets = files.ReadInputFile(inputFile)
+	}
+
+	return
 }
